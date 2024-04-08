@@ -20,7 +20,6 @@ const (
 )
 
 type Coordinator struct {
-	// Your definitions here.
 	mu        sync.Mutex
 	TaskQueue chan *Task
 	TaskInfo  map[int]*TaskInfo
@@ -28,16 +27,6 @@ type Coordinator struct {
 	Files     []string
 	Temp      [][]string
 	Exit      bool
-}
-
-// Your code here -- RPC handlers for the worker to call.
-
-// Example an example RPC handler.
-//
-// the RPC argument and reply types are defined in rpc.go.
-func (c *Coordinator) Example(args *ExampleArgs, reply *ExampleReply) error {
-
-	return nil
 }
 
 // start a thread that listens for RPCs from worker.go
