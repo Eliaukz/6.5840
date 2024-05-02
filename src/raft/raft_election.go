@@ -53,9 +53,10 @@ type RequestVoteReply struct {
 }
 
 func (rf *Raft) isLogUpToDate(prevLogTerm, prevLogIndex int) bool {
-	index := rf.getLastLogIndex()
+	index := rf.getLastLogIndex() - rf.lastIncludedIndex
+
 	if prevLogTerm == rf.logs[index].Term {
-		return prevLogIndex >= index
+		return prevLogIndex >= rf.logs[index].Index
 	}
 
 	return prevLogTerm > rf.logs[index].Term
@@ -154,11 +155,11 @@ func (rf *Raft) startElection() {
 func (rf *Raft) getRequestVoteArgs() RequestVoteArgs {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
-	index := rf.getLastLogIndex()
+	index := rf.getLastLogIndex() - rf.lastIncludedIndex
 	return RequestVoteArgs{
 		Term:         rf.currentTerm,
 		CandidateId:  rf.me,
-		LastLogIndex: index,
+		LastLogIndex: rf.logs[index].Index,
 		LastLogTerm:  rf.logs[index].Term,
 	}
 }

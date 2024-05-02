@@ -61,18 +61,18 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		return
 	}
 
-	if args.PrevLogIndex > 0 && rf.logs[args.PrevLogIndex].Term != args.PrevLogTerm {
+	if args.PrevLogIndex > 0 && rf.logs[args.PrevLogIndex-rf.lastIncludedIndex].Term != args.PrevLogTerm {
 		reply.Term, reply.Success = rf.currentTerm, false
 		index := args.PrevLogIndex
-		reply.ConflictTerm = rf.logs[index].Term
-		for index > 0 && rf.logs[index].Term >= reply.ConflictTerm {
+		reply.ConflictTerm = rf.logs[index-rf.lastIncludedIndex].Term
+		for index-rf.lastIncludedIndex > 0 && rf.logs[index-rf.lastIncludedIndex].Term >= reply.ConflictTerm {
 			index--
 		}
 		reply.ConflictIndex = index + 1
 		return
 	}
 
-	rf.logs = rf.logs[:args.PrevLogIndex+1]
+	rf.logs = rf.logs[:args.PrevLogIndex+1-rf.lastIncludedIndex]
 
 	index := rf.getLastLogIndex()
 
@@ -102,7 +102,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 
 }
 
-func (rf *Raft) getAppendEntries(server int) AppendEntriesArgs {
+func (rf *Raft) getAppendEntries(server int) (AppendEntriesArgs, bool) {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
 
@@ -113,17 +113,22 @@ func (rf *Raft) getAppendEntries(server int) AppendEntriesArgs {
 		LeaderCommit: rf.commitIndex,
 	}
 
-	if args.PrevLogIndex < 0 {
-		args.PrevLogTerm = 0
-	} else {
-		args.PrevLogTerm = rf.logs[args.PrevLogIndex].Term
+	if args.PrevLogIndex < rf.lastIncludedIndex {
+		// 要发送的Log已经被压缩了
+		return args, true
 	}
 
-	entries := rf.logs[rf.nextIndex[server]:]
+	if index := args.PrevLogIndex - rf.lastIncludedIndex; index < 0 {
+		args.PrevLogTerm = 0
+	} else {
+		args.PrevLogTerm = rf.logs[index].Term
+	}
+
+	entries := rf.logs[rf.nextIndex[server]-rf.lastIncludedIndex:]
 	args.Entries = make([]Entry, len(entries))
 	copy(args.Entries, entries)
 
-	return args
+	return args, false
 }
 
 // 收到reply后进行处理
@@ -177,7 +182,7 @@ func (rf *Raft) handleAppendEntries(server int, args *AppendEntriesArgs, reply *
 	for n := rf.getLastLogIndex(); n > rf.commitIndex; n-- {
 		count := 1
 
-		if rf.logs[n].Term == rf.currentTerm {
+		if rf.logs[n-rf.lastIncludedIndex].Term == rf.currentTerm {
 			for i := 0; i < len(rf.peers); i++ {
 				if i != rf.me && rf.matchIndex[i] >= n {
 					count++
@@ -197,15 +202,32 @@ func (rf *Raft) handleAppendEntries(server int, args *AppendEntriesArgs, reply *
 
 func (rf *Raft) applyLogs() {
 	rf.mu.Lock()
-	defer rf.mu.Unlock()
-
-	for rf.lastApplied < rf.commitIndex {
-		msg := ApplyMsg{
-			CommandValid: true,
-			Command:      rf.logs[rf.lastApplied+1].Command,
-			CommandIndex: rf.logs[rf.lastApplied+1].Index,
+	var msgs []ApplyMsg
+	if rf.lastApplied < rf.lastIncludedIndex {
+		rf.mu.Unlock()
+		rf.condInstallSnapshot(rf.lastIncludedIndex, rf.lastIncludedTerm)
+		return
+	} else if rf.commitIndex <= rf.lastApplied {
+		msgs = make([]ApplyMsg, 0)
+	} else {
+		for i := rf.lastApplied + 1; i <= rf.commitIndex; i++ {
+			msgs = append(msgs, ApplyMsg{
+				CommandValid: true,
+				Command:      rf.logs[i-rf.lastIncludedIndex].Command,
+				CommandIndex: rf.logs[i-rf.lastIncludedIndex].Index,
+			})
 		}
+	}
+
+	rf.mu.Unlock()
+
+	for _, msg := range msgs {
 		rf.applyCh <- msg
-		rf.lastApplied++
+		Debug(dLog, "{server %v term %v index %v } apple the index %v log command %v commitIndex %v lastApplied %v\n",
+			rf.me, rf.currentTerm, rf.getLastLogIndex(), msg.CommandIndex, msg.Command, rf.commitIndex, rf.lastApplied)
+
+		rf.mu.Lock()
+		rf.lastApplied = msg.CommandIndex
+		rf.mu.Unlock()
 	}
 }

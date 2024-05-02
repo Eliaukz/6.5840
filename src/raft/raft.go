@@ -90,6 +90,11 @@ type Raft struct {
 	//heartChan 用来停止发送heartbeat，lastUpdate 用来记录上次更新的时间，检测选举超时
 	heartChan  chan struct{}
 	lastUpdate time.Time
+
+	// SnapShot
+	snapshot          []byte
+	lastIncludedIndex int
+	lastIncludedTerm  int
 }
 
 // GetState return currentTerm and whether this server
@@ -99,15 +104,6 @@ func (rf *Raft) GetState() (int, bool) {
 	defer rf.mu.Unlock()
 	// Your code here (3A).
 	return rf.currentTerm, rf.role == Leader
-}
-
-// Snapshot the service says it has created a snapshot that has
-// all info up to and including index. this means the
-// service no longer needs the log through (and including)
-// that index. Raft should now trim its log as much as possible.
-func (rf *Raft) Snapshot(index int, snapshot []byte) {
-	// Your code here (3D).
-
 }
 
 // Start the service using Raft (e.g. a k/v server) wants to start
@@ -209,11 +205,14 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.matchIndex = make([]int, len(peers))
 	rf.role = Follower
 	rf.lastUpdate = time.Now()
+
+	rf.lastIncludedIndex = 0
+	rf.lastIncludedTerm = 0
 	// Your initialization code here (3A, 3B, 3C).
 
 	// initialize from state persisted before a crash
 	rf.readPersist(persister.ReadRaftState())
-
+	rf.readSnapshotPersist(persister.ReadSnapshot())
 	// start ticker goroutine to start elections
 	go rf.ticker()
 
@@ -222,7 +221,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 
 func (rf *Raft) getLastLogIndex() int {
 	if len(rf.logs) == 0 {
-		rf.logs = []Entry{{Index: 0, Term: 0}}
+		rf.logs = []Entry{{Index: rf.lastIncludedIndex, Term: rf.lastIncludedTerm}}
 	}
 	return rf.logs[len(rf.logs)-1].Index
 }
@@ -267,9 +266,12 @@ func (rf *Raft) heartBeat() {
 						}
 
 						go func(server int) {
-							args := rf.getAppendEntries(server)
+							args, isSnapshot := rf.getAppendEntries(server)
 							reply := AppendEntriesReply{}
-							if rf.sendAppendEntries(server, &args, &reply) {
+
+							if isSnapshot {
+								go rf.handleInstallSnapshot(server)
+							} else if rf.sendAppendEntries(server, &args, &reply) {
 								rf.handleAppendEntries(server, &args, &reply)
 							}
 
