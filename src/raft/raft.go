@@ -23,7 +23,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
 	//	"6.5840/labgob"
 	"6.5840/labrpc"
 )
@@ -162,13 +161,26 @@ func (rf *Raft) Snapshot(index int, snapshot []byte) {
 // term. the third return value is true if this server believes it is
 // the leader.
 func (rf *Raft) Start(command interface{}) (int, int, bool) {
-	index := -1
-	term := -1
-	isLeader := true
-
 	// Your code here (3B).
+	term, isLeader := rf.GetState()
+	if !isLeader {
+		return -1, term, isLeader
+	}
 
-	return index, term, isLeader
+	rf.mu.Lock()
+
+	index := rf.getLastLogIndex()
+	log := Entry{
+		Index:   index + 1,
+		Term:    rf.currentTerm,
+		Command: command,
+	}
+	rf.logs = append(rf.logs, log)
+	rf.mu.Unlock()
+
+	Debug(dLeader, "{server %v term %v index %v } start a new command\n", rf.me, rf.currentTerm, rf.getLastLogIndex())
+
+	return index + 1, term, isLeader
 }
 
 // Kill the tester doesn't halt goroutines created by Raft after each test,
@@ -199,7 +211,7 @@ func (rf *Raft) ticker() {
 
 		// pause for a random amount of time between 50 and 350
 		// milliseconds.
-		ms := 50 + (rand.Int63() % 300)
+		ms := 600 + (rand.Int63() % 300)
 		rf.mu.Lock()
 		lastTime, isLeader := rf.lastUpdate, rf.role == Leader
 		rf.mu.Unlock()
@@ -247,6 +259,9 @@ func Make(peers []*labrpc.ClientEnd, me int,
 }
 
 func (rf *Raft) getLastLogIndex() int {
+	if len(rf.logs) == 0 {
+		rf.logs = []Entry{{Index: 0, Term: 0}}
+	}
 	return rf.logs[len(rf.logs)-1].Index
 }
 
@@ -254,52 +269,57 @@ func (rf *Raft) convertTo(role Role) {
 	if role == Follower && rf.role == Leader {
 		close(rf.heartChan)
 	} else if role == Leader {
+
 		for i := range rf.nextIndex {
-			rf.nextIndex[i] = len(rf.logs)
+			rf.nextIndex[i] = rf.getLastLogIndex() + 1
 		}
 		for i := range rf.matchIndex {
 			rf.matchIndex[i] = -1
 		}
 
 		rf.heartChan = make(chan struct{})
-		go rf.heartBeat()
+		rf.heartBeat()
 	}
 
-	Debug(dInfo, "{server %v at term %v index %v } convert from %v to %v\n", rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.role, role)
+	Debug(dInfo, "{server %v term %v index %v } convert from %v to %v\n", rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.role, role)
 
 	rf.role = role
 
 }
 
 func (rf *Raft) heartBeat() {
-	Debug(dInfo, "{server %v at term %v index %v } send heartbeat to other server", rf.me, rf.currentTerm, rf.getLastLogIndex())
+	Debug(dLeader, "{server %v term %v index %v } send heartbeat to other server", rf.me, rf.currentTerm, rf.getLastLogIndex())
 
 	sleepTime := time.Second / 8
 
-	for !rf.killed() {
-		select {
-		case <-rf.heartChan:
-			return
-		default:
-			if _, isLeader := rf.GetState(); isLeader {
-				for i := range rf.peers {
-					if i == rf.me {
-						continue
-					}
-
-					go func(server int) {
-						args := rf.getAppendEntries(server)
-						reply := AppendEntriesReply{}
-						rf.sendAppendEntries(server, &args, &reply)
-
-					}(i)
-
-				}
-			} else {
+	go func() {
+		for rf.killed() == false {
+			select {
+			case <-rf.heartChan:
 				return
+			default:
+				if _, isLeader := rf.GetState(); isLeader {
+					for i := 0; i < len(rf.peers); i++ {
+						if i == rf.me {
+							continue
+						}
+
+						go func(server int) {
+							args := rf.getAppendEntries(server)
+							reply := AppendEntriesReply{}
+							if rf.sendAppendEntries(server, &args, &reply) {
+								rf.handleAppendEntries(server, &args, &reply)
+							}
+
+						}(i)
+
+					}
+				} else {
+					return
+				}
+				time.Sleep(sleepTime)
 			}
-			time.Sleep(sleepTime)
 		}
-	}
+	}()
 
 }

@@ -67,7 +67,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
 
-	Debug(dLog, "{server %v term %v index %v } receive args from server %v term %v lastLogIndex %v lastLogTerm %v\n",
+	Debug(dVote, "{server %v term %v index %v } receive args from server %v term %v lastLogIndex %v lastLogTerm %v\n",
 		rf.me, rf.currentTerm, rf.getLastLogIndex(), args.CandidateId, args.Term, args.LastLogIndex, args.LastLogTerm)
 	/*
 		handle
@@ -105,7 +105,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	rf.votedFor = args.CandidateId
 	rf.lastUpdate = time.Now()
 
-	Debug(dLog, "{server %v term %v index %v succeed to voteFor %v",
+	Debug(dVote, "{server %v term %v index %v } succeed to voteFor %v",
 		rf.me, rf.currentTerm, rf.getLastLogIndex(), args.CandidateId)
 }
 
@@ -116,9 +116,10 @@ func (rf *Raft) startElection() {
 	rf.convertTo(Candidate)
 	rf.mu.Unlock()
 
-	Debug(dTimer, "{server %v at term %v index %v } start election\n", rf.me, rf.currentTerm, rf.getLastLogIndex())
+	Debug(dTimer, "{server %v term %v index %v } start election\n", rf.me, rf.currentTerm, rf.getLastLogIndex())
 	args := rf.getRequestVoteArgs()
-	votecount := 1
+
+	voteCount := 1
 
 	for i := range rf.peers {
 		if i == rf.me {
@@ -131,9 +132,9 @@ func (rf *Raft) startElection() {
 				rf.mu.Lock()
 				defer rf.mu.Unlock()
 				if rf.role == Candidate && reply.VoteGranted {
-					votecount++
+					voteCount++
 					// 超过半数投票
-					if votecount > len(rf.peers)/2 {
+					if voteCount > len(rf.peers)/2 {
 						rf.convertTo(Leader)
 						return
 					}
