@@ -66,6 +66,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	// Your code here (3A, 3B).
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
+	defer rf.persist()
 
 	Debug(dVote, "{server %v term %v index %v } receive args from server %v term %v lastLogIndex %v lastLogTerm %v\n",
 		rf.me, rf.currentTerm, rf.getLastLogIndex(), args.CandidateId, args.Term, args.LastLogIndex, args.LastLogTerm)
@@ -115,6 +116,7 @@ func (rf *Raft) startElection() {
 	rf.votedFor = rf.me
 	rf.convertTo(Candidate)
 	rf.mu.Unlock()
+	defer rf.persist()
 
 	Debug(dTimer, "{server %v term %v index %v } start election\n", rf.me, rf.currentTerm, rf.getLastLogIndex())
 	args := rf.getRequestVoteArgs()

@@ -19,11 +19,15 @@ type AppendEntriesArgs struct {
 type AppendEntriesReply struct {
 	Term    int
 	Success bool
+
+	ConflictIndex int
+	ConflictTerm  int
 }
 
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
 	rf.mu.Lock()
 	rf.mu.Unlock()
+	defer rf.persist()
 
 	Debug(dInfo, "{server %v term %v index %v } receive args from "+
 		"server %v term %v prevLogIndex %v prevLogTerm %v leaderCommit %v len(log) = %v\n",
@@ -52,11 +56,19 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 
 	if args.PrevLogIndex > rf.getLastLogIndex() {
 		reply.Term, reply.Success = rf.currentTerm, false
+		reply.ConflictIndex = rf.getLastLogIndex() + 1
+		reply.ConflictTerm = 0
 		return
 	}
 
 	if args.PrevLogIndex > 0 && rf.logs[args.PrevLogIndex].Term != args.PrevLogTerm {
 		reply.Term, reply.Success = rf.currentTerm, false
+		index := args.PrevLogIndex
+		reply.ConflictTerm = rf.logs[index].Term
+		for index > 0 && rf.logs[index].Term >= reply.ConflictTerm {
+			index--
+		}
+		reply.ConflictIndex = index + 1
 		return
 	}
 
@@ -118,6 +130,7 @@ func (rf *Raft) getAppendEntries(server int) AppendEntriesArgs {
 func (rf *Raft) handleAppendEntries(server int, args *AppendEntriesArgs, reply *AppendEntriesReply) {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
+	defer rf.persist()
 
 	Debug(dInfo, "{server %v term %v index %v } role %v receive reply from <> at term %v success %v",
 		rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.role, reply.Term, reply.Success)
@@ -144,9 +157,17 @@ func (rf *Raft) handleAppendEntries(server int, args *AppendEntriesArgs, reply *
 	}
 
 	if !reply.Success {
-		if rf.nextIndex[server] > 0 {
-			rf.nextIndex[server]--
+		if reply.ConflictTerm != 0 {
+			index := rf.nextIndex[server] - 1
+			for index >= 0 && rf.logs[index].Term > reply.ConflictTerm {
+				index--
+			}
+			if index > 0 && rf.logs[index].Term == reply.ConflictTerm {
+				rf.nextIndex[server] = index + 1
+				return
+			}
 		}
+		rf.nextIndex[server] = reply.ConflictIndex
 		return
 	}
 
