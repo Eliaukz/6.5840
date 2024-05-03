@@ -169,7 +169,7 @@ func (rf *Raft) ticker() {
 
 		// pause for a random amount of time between 50 and 350
 		// milliseconds.
-		ms := 600 + (rand.Int63() % 300)
+		ms := 200 + (rand.Int63() % 300)
 		rf.mu.Lock()
 		lastTime, isLeader := rf.lastUpdate, rf.role == Leader
 		rf.mu.Unlock()

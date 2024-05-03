@@ -54,14 +54,14 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 
 	rf.lastUpdate = time.Now()
 
-	if args.PrevLogIndex > rf.getLastLogIndex() {
+	if args.PrevLogIndex > rf.getLastLogIndex() || args.PrevLogIndex < rf.lastIncludedIndex {
 		reply.Term, reply.Success = rf.currentTerm, false
 		reply.ConflictIndex = rf.getLastLogIndex() + 1
 		reply.ConflictTerm = 0
 		return
 	}
 
-	if args.PrevLogIndex > 0 && rf.logs[args.PrevLogIndex-rf.lastIncludedIndex].Term != args.PrevLogTerm {
+	if args.PrevLogIndex-rf.lastIncludedIndex >= 0 && rf.logs[args.PrevLogIndex-rf.lastIncludedIndex].Term != args.PrevLogTerm {
 		reply.Term, reply.Success = rf.currentTerm, false
 		index := args.PrevLogIndex
 		reply.ConflictTerm = rf.logs[index-rf.lastIncludedIndex].Term
@@ -163,12 +163,12 @@ func (rf *Raft) handleAppendEntries(server int, args *AppendEntriesArgs, reply *
 
 	if !reply.Success {
 		if reply.ConflictTerm != 0 {
-			index := rf.nextIndex[server] - 1
+			index := rf.nextIndex[server] - 1 - rf.lastIncludedIndex
 			for index >= 0 && rf.logs[index].Term > reply.ConflictTerm {
 				index--
 			}
 			if index > 0 && rf.logs[index].Term == reply.ConflictTerm {
-				rf.nextIndex[server] = index + 1
+				rf.nextIndex[server] = index + 1 + rf.lastIncludedIndex
 				return
 			}
 		}

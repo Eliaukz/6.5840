@@ -60,7 +60,7 @@ func (ck *Clerk) Get(key string) string {
 		} else if !ok || reply.Err == ErrWrongLeader {
 			ck.leader = (ck.leader + 1) % len(ck.servers)
 		} else if reply.Err == TimeOut {
-			time.Sleep(20 * time.Millisecond)
+			time.Sleep(200 * time.Millisecond)
 		}
 
 	}
@@ -95,7 +95,7 @@ func (ck *Clerk) PutAppend(key string, value string, op string) {
 		} else if !ok || reply.Err == ErrWrongLeader {
 			ck.leader = (ck.leader + 1) % len(ck.servers)
 		} else if reply.Err == TimeOut {
-			time.Sleep(20 * time.Millisecond)
+			time.Sleep(200 * time.Millisecond)
 		}
 
 	}
