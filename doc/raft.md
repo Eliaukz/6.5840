@@ -68,4 +68,48 @@ Leader节点收到reply后的处理如下
 在leader提交日志时，应该查看Figure8，不提交之前任期的日志。只根据自己任期的日志的复制的节点数量是否过半数来决定是否将该日志应用到状态机，同时将之前的日志应用的状态机。
 
 
-			
+## persistence
+
+persist的实现比较简单，在每次voteFer，currentTerm，log被修改的时候都要及时执行persist。
+
+为了完全通过3C的测试，需要在appendEntryReply中增加
+```go
+ConflictIndex int
+ConflictTerm  int
+```
+
+来优化冲突日志。
+## log compaction
+ 发送installSnapshot的时机问题：
+	在leader发送AppendEntriesRpc时出现nextIndex[i] <= rf.lastIncludedIndex情况时，因为nextIndex[i]是节点S[i]期待收到的下条命令乐观估计，rf.lastIncludedIndex是leader已经apply且其之前的log都已被删掉。
+
+如果节点收到超过自己的最大日志索引的快照，则完全丢弃自己的日志（但是我的操作时插入一条空的日志，时刻保证自己的日志不为空以减少边界条件的判断），然后将快照应用到自己的快照中。
+
+# summary
+
+这个实验给我的最大感受是做后面的实验还要重新修改前面的代码，~~我不是已经pass测试了吗~~ ，做实验4的时候疯狂修改raft的边界条件的判断。
+
+虽然如此，还是不能通过实验4的速度测试。 估计是raft的设计问题，不想修改了。
+```txt
+Test: ops complete fast enough (4A) ...
+--- FAIL: TestSpeed4A (126.30s)
+    test_test.go:419: Operations completed too slowly 125.863652ms/op > 33.333333ms/op
+
+
+Test: ops complete fast enough (4B) ...
+--- FAIL: TestSpeed4B (126.33s)
+    test_test.go:419: Operations completed too slowly 125.54246ms/op > 33.333333ms/op
+
+```
+
+实验4都不能通过测试，实验5索性摆烂。
+
+最后，如果无法修改测试，不妨试着修改一下raft的超时时长。maybe useful。
+
+感谢以下github仓库的帮助：
+* [https://github.com/fravenx/MIT-6.824.git](https://github.com/fravenx/MIT-6.824.git)
+* [https://github.com/epegase/6.824.git](https://github.com/epegase/6.824.git)
+* [https://github.com/aure-lee/MIT6.5840-2024Spring.git](https://github.com/aure-lee/MIT6.5840-2024Spring.git)
+* [https://github.com/maemual/raft-zh_cn.git](https://github.com/maemual/raft-zh_cn.git)
+
+
