@@ -144,6 +144,7 @@ func (rf *Raft) startElection() {
 				} else if reply.Term > rf.currentTerm {
 					//转变为对应任期的follower
 					rf.currentTerm = reply.Term
+					rf.votedFor = -1
 					rf.convertTo(Follower)
 				}
 			}
