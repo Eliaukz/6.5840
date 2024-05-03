@@ -136,7 +136,7 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 	rf.logs = append(rf.logs, log)
 	rf.mu.Unlock()
 	rf.persist()
-	Debug(dLeader, "{server %v term %v index %v } start a new command\n", rf.me, rf.currentTerm, rf.getLastLogIndex())
+	//Debug(dLeader, "{server %v term %v index %v } start a new command\n", rf.me, rf.currentTerm, rf.getLastLogIndex())
 
 	return index + 1, term, isLeader
 }
@@ -152,7 +152,7 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 // should call killed() to check whether it should stop.
 func (rf *Raft) Kill() {
 	atomic.StoreInt32(&rf.dead, 1)
-	Debug(dInfo, "{server %v at term %v index %v} is killed\n", rf.me, rf.currentTerm, rf.getLastLogIndex())
+	//Debug(dInfo, "{server %v at term %v index %v} is killed\n", rf.me, rf.currentTerm, rf.getLastLogIndex())
 	// Your code here, if desired.
 }
 
@@ -239,51 +239,49 @@ func (rf *Raft) convertTo(role Role) {
 		}
 
 		rf.heartChan = make(chan struct{})
-		rf.heartBeat()
+		go rf.heartBeat()
 	}
 
-	Debug(dInfo, "{server %v term %v index %v } convert from %v to %v\n", rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.role, role)
+	//Debug(dInfo, "{server %v term %v index %v } convert from %v to %v\n", rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.role, role)
 
 	rf.role = role
 
 }
 
 func (rf *Raft) heartBeat() {
-	Debug(dLeader, "{server %v term %v index %v } send heartbeat to other server", rf.me, rf.currentTerm, rf.getLastLogIndex())
+	//Debug(dLeader, "{server %v term %v index %v } send heartbeat to other server", rf.me, rf.currentTerm, rf.getLastLogIndex())
 
 	sleepTime := time.Second / 8
 
-	go func() {
-		for rf.killed() == false {
-			select {
-			case <-rf.heartChan:
-				return
-			default:
-				if _, isLeader := rf.GetState(); isLeader {
-					for i := 0; i < len(rf.peers); i++ {
-						if i == rf.me {
-							continue
+	for rf.killed() == false {
+		select {
+		case <-rf.heartChan:
+			return
+		default:
+			if _, isLeader := rf.GetState(); isLeader {
+				for i := 0; i < len(rf.peers); i++ {
+					if i == rf.me {
+						continue
+					}
+
+					go func(server int) {
+						args, isSnapshot := rf.getAppendEntries(server)
+						reply := AppendEntriesReply{}
+
+						if isSnapshot {
+							go rf.handleInstallSnapshot(server)
+						} else if rf.sendAppendEntries(server, &args, &reply) {
+							rf.handleAppendEntries(server, &args, &reply)
 						}
 
-						go func(server int) {
-							args, isSnapshot := rf.getAppendEntries(server)
-							reply := AppendEntriesReply{}
+					}(i)
 
-							if isSnapshot {
-								go rf.handleInstallSnapshot(server)
-							} else if rf.sendAppendEntries(server, &args, &reply) {
-								rf.handleAppendEntries(server, &args, &reply)
-							}
-
-						}(i)
-
-					}
-				} else {
-					return
 				}
-				time.Sleep(sleepTime)
+			} else {
+				return
 			}
+			time.Sleep(sleepTime)
 		}
-	}()
+	}
 
 }

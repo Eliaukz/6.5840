@@ -26,13 +26,13 @@ type AppendEntriesReply struct {
 
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
 	rf.mu.Lock()
-	rf.mu.Unlock()
+	defer rf.mu.Unlock()
 	defer rf.persist()
 
-	Debug(dInfo, "{server %v term %v index %v } receive args from "+
-		"server %v term %v prevLogIndex %v prevLogTerm %v leaderCommit %v len(log) = %v\n",
-		rf.me, rf.currentTerm, rf.getLastLogIndex(),
-		args.LeaderId, args.Term, args.PrevLogIndex, args.PrevLogTerm, args.LeaderCommit, len(args.Entries))
+	//Debug(dInfo, "{server %v term %v index %v } receive args from "+
+	//	"server %v term %v prevLogIndex %v prevLogTerm %v leaderCommit %v len(log) = %v\n",
+	//	rf.me, rf.currentTerm, rf.getLastLogIndex(),
+	//	args.LeaderId, args.Term, args.PrevLogIndex, args.PrevLogTerm, args.LeaderCommit, len(args.Entries))
 
 	/*
 		handle
@@ -97,8 +97,8 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 
 	reply.Term, reply.Success = args.Term, true
 
-	Debug(dInfo, "{server %v term %v index %v } success to apply log commitIndex %d \n",
-		rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.commitIndex)
+	//Debug(dInfo, "{server %v term %v index %v } success to apply log commitIndex %d \n",
+	//	rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.commitIndex)
 
 }
 
@@ -137,8 +137,8 @@ func (rf *Raft) handleAppendEntries(server int, args *AppendEntriesArgs, reply *
 	defer rf.mu.Unlock()
 	defer rf.persist()
 
-	Debug(dInfo, "{server %v term %v index %v } role %v receive reply from <> at term %v success %v",
-		rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.role, reply.Term, reply.Success)
+	//Debug(dInfo, "{server %v term %v index %v } role %v receive reply from <> at term %v success %v",
+	//	rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.role, reply.Term, reply.Success)
 
 	rf.lastUpdate = time.Now()
 
@@ -196,8 +196,8 @@ func (rf *Raft) handleAppendEntries(server int, args *AppendEntriesArgs, reply *
 			break
 		}
 	}
-	Debug(dInfo, "{server %v term %v index %v } update logs, lastApplyIndex %v commitIndex %v\n",
-		rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.lastApplied, rf.commitIndex)
+	//Debug(dInfo, "{server %v term %v index %v } update logs, lastApplyIndex %v commitIndex %v\n",
+	//	rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.lastApplied, rf.commitIndex)
 }
 
 func (rf *Raft) applyLogs() {
@@ -223,8 +223,8 @@ func (rf *Raft) applyLogs() {
 
 	for _, msg := range msgs {
 		rf.applyCh <- msg
-		Debug(dLog, "{server %v term %v index %v } apple the index %v log command %v commitIndex %v lastApplied %v\n",
-			rf.me, rf.currentTerm, rf.getLastLogIndex(), msg.CommandIndex, msg.Command, rf.commitIndex, rf.lastApplied)
+		//Debug(dLog, "{server %v term %v index %v } apple the index %v log command %v commitIndex %v lastApplied %v\n",
+		//	rf.me, rf.currentTerm, rf.getLastLogIndex(), msg.CommandIndex, msg.Command, rf.commitIndex, rf.lastApplied)
 
 		rf.mu.Lock()
 		rf.lastApplied = msg.CommandIndex

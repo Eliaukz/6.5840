@@ -69,8 +69,8 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	defer rf.mu.Unlock()
 	defer rf.persist()
 
-	Debug(dVote, "{server %v term %v index %v } receive args from server %v term %v lastLogIndex %v lastLogTerm %v\n",
-		rf.me, rf.currentTerm, rf.getLastLogIndex(), args.CandidateId, args.Term, args.LastLogIndex, args.LastLogTerm)
+	//Debug(dVote, "{server %v term %v index %v } receive args from server %v term %v lastLogIndex %v lastLogTerm %v\n",
+	//	rf.me, rf.currentTerm, rf.getLastLogIndex(), args.CandidateId, args.Term, args.LastLogIndex, args.LastLogTerm)
 	/*
 		handle
 		1. args.term < currentTerm  :  返回投票失败
@@ -107,8 +107,8 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	rf.votedFor = args.CandidateId
 	rf.lastUpdate = time.Now()
 
-	Debug(dVote, "{server %v term %v index %v } succeed to voteFor %v",
-		rf.me, rf.currentTerm, rf.getLastLogIndex(), args.CandidateId)
+	//Debug(dVote, "{server %v term %v index %v } succeed to voteFor %v",
+	//	rf.me, rf.currentTerm, rf.getLastLogIndex(), args.CandidateId)
 }
 
 func (rf *Raft) startElection() {
@@ -119,7 +119,7 @@ func (rf *Raft) startElection() {
 	rf.mu.Unlock()
 	defer rf.persist()
 
-	Debug(dTimer, "{server %v term %v index %v } start election\n", rf.me, rf.currentTerm, rf.getLastLogIndex())
+	//Debug(dTimer, "{server %v term %v index %v } start election\n", rf.me, rf.currentTerm, rf.getLastLogIndex())
 	args := rf.getRequestVoteArgs()
 
 	voteCount := 1

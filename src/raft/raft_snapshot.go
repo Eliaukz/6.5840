@@ -30,8 +30,8 @@ func (rf *Raft) Snapshot(index int, snapshot []byte) {
 	defer rf.persist()
 
 	if index <= rf.lastIncludedIndex {
-		Debug(dSnap, "{server %v term %v index %v } role %v  reject the snapshot the %v index has snapshoted and the lastest index is %v\n",
-			rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.role, index, rf.lastIncludedIndex)
+		//Debug(dSnap, "{server %v term %v index %v } role %v  reject the snapshot the %v index has snapshoted and the lastest index is %v\n",
+		//	rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.role, index, rf.lastIncludedIndex)
 
 		return
 	}
@@ -49,8 +49,8 @@ func (rf *Raft) Snapshot(index int, snapshot []byte) {
 	rf.logs[0].Command = nil
 
 	rf.snapshot = snapshot
-	Debug(dSnap, "{server %v term %v index %v } role %v accept the snapshot the %v index has snapshoted and the lastest index is %v\n",
-		rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.role, index, rf.lastIncludedIndex)
+	//Debug(dSnap, "{server %v term %v index %v } role %v accept the snapshot the %v index has snapshoted and the lastest index is %v\n",
+	//	rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.role, index, rf.lastIncludedIndex)
 
 }
 
@@ -58,8 +58,8 @@ func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapsho
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
 
-	Debug(dSnap, "{server %v term %v index %v } receive snapshot from {server %v term %v} lastIncludeIndex %v lastIndexTerm %v\n",
-		rf.me, rf.currentTerm, rf.getLastLogIndex(), args.LeaderId, args.Term, args.LastIncludedIndex, args.LastIncludedTerm)
+	//Debug(dSnap, "{server %v term %v index %v } receive snapshot from {server %v term %v} lastIncludeIndex %v lastIndexTerm %v\n",
+	//	rf.me, rf.currentTerm, rf.getLastLogIndex(), args.LeaderId, args.Term, args.LastIncludedIndex, args.LastIncludedTerm)
 
 	/*
 		handle
@@ -115,8 +115,8 @@ func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapsho
 		SnapshotIndex: args.LastIncludedIndex,
 	}
 
-	Debug(dSnap, "{server %v term %v index %v} Success install snapshot and lastIncludedIndex %v lastIncludedTerm %v\n",
-		rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.lastIncludedIndex, rf.lastIncludedTerm)
+	//Debug(dSnap, "{server %v term %v index %v} Success install snapshot and lastIncludedIndex %v lastIncludedTerm %v\n",
+	//	rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.lastIncludedIndex, rf.lastIncludedTerm)
 }
 
 func (rf *Raft) handleInstallSnapshot(server int) {
@@ -129,7 +129,6 @@ func (rf *Raft) handleInstallSnapshot(server int) {
 		Data:              rf.snapshot,
 	}
 	rf.mu.Unlock()
-	defer rf.persist()
 
 	/*
 		handle
@@ -140,12 +139,16 @@ func (rf *Raft) handleInstallSnapshot(server int) {
 
 	reply := InstallSnapshotReply{}
 
-	Debug(dSnap, "{server %v term %v index %v } Send InstallSnapshot to {Server %v} lastIncludedIndex %v lastIncludedTerm %v\n",
-		rf.me, rf.currentTerm, rf.getLastLogIndex(), server, rf.lastIncludedIndex, rf.lastIncludedTerm)
+	//Debug(dSnap, "{server %v term %v index %v } Send InstallSnapshot to {Server %v} lastIncludedIndex %v lastIncludedTerm %v\n",
+	//	rf.me, rf.currentTerm, rf.getLastLogIndex(), server, rf.lastIncludedIndex, rf.lastIncludedTerm)
 
 	if !rf.sendInstallSnapshot(server, &args, &reply) {
 		return
 	}
+
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+	defer rf.persist()
 
 	if rf.role != Leader || rf.currentTerm != args.Term {
 		// 已经不是Leader或者是过期的Leader
@@ -153,8 +156,9 @@ func (rf *Raft) handleInstallSnapshot(server int) {
 	}
 
 	if reply.Term > rf.currentTerm {
-		Debug(dSnap, "{server %v term %v index %v } Send Snapshot but current term is old (old term %v)\n",
-			rf.me, rf.currentTerm, rf.getLastLogIndex(), args.Term)
+		//Debug(dSnap, "{server %v term %v index %v } Send Snapshot but current term is old (old term %v)\n",
+		//	rf.me, rf.currentTerm, rf.getLastLogIndex(), args.Term)
+
 		rf.currentTerm = reply.Term
 		rf.convertTo(Follower)
 		rf.votedFor = -1
@@ -190,7 +194,7 @@ func (rf *Raft) condInstallSnapshot(lastIncludedIndex int, lastIncludedTerm int)
 	rf.lastIncludedIndex, rf.lastIncludedTerm = lastIncludedIndex, lastIncludedTerm
 	rf.lastApplied, rf.commitIndex = lastIncludedIndex, lastIncludedIndex
 
-	Debug(dSnap, "{server %v term %v index %v } update new snapshot lastIncludeIndex %v lastIndexTerm %v commitIndex %v lastApplied %v\n",
-		rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.lastIncludedIndex, rf.lastIncludedTerm, rf.commitIndex, rf.lastApplied)
+	//Debug(dSnap, "{server %v term %v index %v } update new snapshot lastIncludeIndex %v lastIndexTerm %v commitIndex %v lastApplied %v\n",
+	//	rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.lastIncludedIndex, rf.lastIncludedTerm, rf.commitIndex, rf.lastApplied)
 
 }
