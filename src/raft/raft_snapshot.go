@@ -181,18 +181,11 @@ func (rf *Raft) condInstallSnapshot(lastIncludedIndex int, lastIncludedTerm int)
 
 	lastIndex := rf.getLastLogIndex()
 	if lastIncludedIndex > lastIndex {
-		rf.logs = make([]Entry, 1)
-	} else {
-		installLen := lastIncludedIndex - rf.lastIncludedIndex
-		rf.logs = rf.logs[installLen:]
+
+		rf.logs = []Entry{{Index: lastIncludedIndex, Term: lastIncludedTerm}}
+		rf.lastApplied, rf.commitIndex = lastIncludedIndex, lastIncludedIndex
+
 	}
-
-	rf.logs[0].Command = nil
-	rf.logs[0].Index = lastIncludedIndex
-	rf.logs[0].Term = lastIncludedTerm
-
-	rf.lastIncludedIndex, rf.lastIncludedTerm = lastIncludedIndex, lastIncludedTerm
-	rf.lastApplied, rf.commitIndex = lastIncludedIndex, lastIncludedIndex
 
 	//Debug(dSnap, "{server %v term %v index %v } update new snapshot lastIncludeIndex %v lastIndexTerm %v commitIndex %v lastApplied %v\n",
 	//	rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.lastIncludedIndex, rf.lastIncludedTerm, rf.commitIndex, rf.lastApplied)

@@ -209,6 +209,7 @@ func (rf *Raft) applyLogs() {
 		return
 	} else if rf.commitIndex <= rf.lastApplied {
 		msgs = make([]ApplyMsg, 0)
+		rf.commitIndex = rf.lastApplied
 	} else {
 		for i := rf.lastApplied + 1; i <= rf.commitIndex; i++ {
 			msgs = append(msgs, ApplyMsg{
