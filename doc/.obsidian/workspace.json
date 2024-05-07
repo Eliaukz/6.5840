@@ -13,13 +13,26 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "raft.md",
+                "file": "mr-paper.md",
+                "mode": "source",
+                "source": false
+              }
+            }
+          },
+          {
+            "id": "5b3ff0b64181d1d1",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "raft-paper.md",
                 "mode": "source",
                 "source": false
               }
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -85,7 +98,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "raft.md",
+                "file": "raft-paper.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -102,7 +115,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "raft.md",
+                "file": "raft-paper.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -125,7 +138,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "raft.md"
+                "file": "raft-paper.md"
               }
             }
           }
@@ -146,8 +159,17 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "8017352924114545",
+  "active": "6117b961abd59fea",
   "lastOpenFiles": [
+    "imgs/图3.png",
+    "imgs/图2.png",
+    "imgs/图1.png",
+    "imgs",
+    "mr-paper.md",
+    "raft-paper.md",
+    "raft-paper",
+    "mr-paper.pdf",
+    "raft.md",
     "mr.md"
   ]
 }

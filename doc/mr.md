@@ -11,7 +11,7 @@ tags:
 * 论文地址[https://static.googleusercontent.com/media/research.google.com/zh-CN//archive/mapreduce-osdi04.pdf](https://static.googleusercontent.com/media/research.google.com/zh-CN//archive/mapreduce-osdi04.pdf)
 ## 总体设计
 该实验比较简单，总体流程如下图所示
-![](./img.png)
+![](img.png)
 * Master 节点只负责分配任务
 * worker节点负责map以及reduce任务：
 	* map 将字符串分割为单个单词然后保存进中间文件中```
