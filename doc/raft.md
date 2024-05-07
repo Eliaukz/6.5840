@@ -111,5 +111,6 @@ Test: ops complete fast enough (4B) ...
 * [https://github.com/epegase/6.824.git](https://github.com/epegase/6.824.git)
 * [https://github.com/aure-lee/MIT6.5840-2024Spring.git](https://github.com/aure-lee/MIT6.5840-2024Spring.git)
 * [https://github.com/maemual/raft-zh_cn.git](https://github.com/maemual/raft-zh_cn.git)
+* [https://github.com/OneSizeFitsQuorum/raft-thesis-zh_cn.git](https://github.com/OneSizeFitsQuorum/raft-thesis-zh_cn.git)
 
 

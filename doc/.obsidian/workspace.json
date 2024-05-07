@@ -159,8 +159,10 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "6117b961abd59fea",
+  "active": "5b3ff0b64181d1d1",
   "lastOpenFiles": [
+    "raft.md",
+    "raft-paper.md",
     "imgs/f19.png",
     "imgs/f18.png",
     "imgs/f17.png",
@@ -171,13 +173,10 @@
     "imgs/f13.png",
     "imgs/f12.png",
     "imgs/f11.png",
-    "imgs/f10.png",
     "mr-paper.md",
-    "raft-paper.md",
     "imgs",
     "raft-paper",
     "mr-paper.pdf",
-    "raft.md",
     "mr.md"
   ]
 }
