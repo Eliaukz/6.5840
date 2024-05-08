@@ -26,7 +26,8 @@ hint：
 2. raft的snapshotBasic测试代码会莫名其妙的与applyLog函数出现死锁🤔，希望有时间了会研究一下相关代码，检查一下死锁的原因。    
     [TODO]
 
-
+ohhh：
+~~没有服务器跑压力测试，怎么过了一周重新跑的还会出现bug~~
 
 [mapreduce](./doc/mr.md)    
 [mapreduce-paper](./doc/mr-paper.md)    
