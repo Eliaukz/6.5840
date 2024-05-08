@@ -16,19 +16,19 @@ MapReduce编程模型的原理是：利用一个输入key/value pair集合来产
 ### Example
 
 下面来考虑这样一个问题：统计大量文档中每一个单词出现的次数。
-```
-map(String key, String value):
-    // key: document name
-    // value: document contents
-    for each word w in value:
-        EmitIntermediate(w, “1″);
-reduce(String key, Iterator values):
-    // key: a word
-    // values: a list of counts
-    int result = 0;
-    for each v in values:
-        result += ParseInt(v);
-    Emit(AsString(result));
+```go
+map(String key, String value):   
+    // key: document name    
+    // value: document contents   
+    for each word w in value:   
+        EmitIntermediate(w, “1″);   
+reduce(String key, Iterator values):   
+    // key: a word   
+    // values: a list of counts   
+    int result = 0;   
+    for each v in values:   
+        result += ParseInt(v);   
+    Emit(AsString(result));   
 ```
 
 Map函数输出文档中的每个词、以及这个词的出现次数(在这个简单的例子里就是1)。Reduce函数把Map函数产生的每一个特定的词的计数累加起来。
@@ -46,7 +46,7 @@ Map函数输出文档中的每个词、以及这个词的出现次数(在这个�
 
 ### 执行概括
 
-![](img.png)
+![](./imgs/img.png)
 上图展示了我们的MapReduce实现中操作的全部流程。当用户调用MapReduce函数时，将发生下面的一系列动作（下面的序号和图1中的序号一一对应）：
 
 - 用户程序首先调用的MapReduce库将输入文件分成M个数据片度，每个数据片段的大小一般从 16MB到64MB(可以通过可选的参数来控制每个数据片段的大小)。然后用户程序在机群中创建大量的程序副本。 
@@ -153,7 +153,7 @@ MapReduce库使用计数器统计不同事件发生次数。
 
 为了使用这个特性，用户在程序中创建一个命名的计数器对象，在Map和Reduce函数中相应的增加计数器的值。例如：
 
-```
+```go
 Counter* uppercase;
 uppercase = GetCounter(“uppercase”);
 map(String name, String contents):
