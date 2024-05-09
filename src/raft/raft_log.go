@@ -203,11 +203,16 @@ func (rf *Raft) handleAppendEntries(server int, args *AppendEntriesArgs, reply *
 func (rf *Raft) applyLogs() {
 	rf.mu.Lock()
 	var msgs []ApplyMsg
+
 	if rf.lastApplied < rf.lastIncludedIndex {
-		rf.commitIndex, rf.lastApplied = rf.lastIncludedIndex, rf.lastIncludedIndex
-		rf.mu.Unlock()
-		return
-	} else if rf.commitIndex <= rf.lastApplied {
+		rf.lastApplied = rf.lastIncludedIndex
+	}
+
+	if rf.commitIndex < rf.lastIncludedIndex {
+		rf.commitIndex = rf.lastIncludedIndex
+	}
+
+	if rf.commitIndex < rf.lastApplied {
 		rf.commitIndex = rf.lastApplied
 		rf.mu.Unlock()
 		return
