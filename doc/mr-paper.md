@@ -7,7 +7,7 @@ MapReduce架构的程序能够在大量的普通配置的计算机上实现并�
 
 ## 编程模型
 
-MapReduce编程模型的原理是：利用一个输入key/value pair集合来产生一个输出的key/value pair集合。MapReduce库的用户用两个函数表达这个计算：Map和Reduce。
+MapReduce编程模型的原理是：**利用一个输入key/value pair集合来产生一个输出的key/value pair集合。MapReduce库的用户用两个函数表达这个计算：Map和Reduce。**
 
 用户自定义的Map函数接受一个输入的key/value pair值，然后产生一个中间key/value pair值的集合。MapReduce库把所有具有相同中间key值I的中间value值集合在一起后传递给reduce函数。
 
@@ -63,14 +63,14 @@ Map函数输出文档中的每个词、以及这个词的出现次数(在这个�
 
 Master持有一些数据结构，它存储每一个Map和Reduce任务的状态（空闲、工作中或完成)，以及Worker机器(非空闲任务的机器)的标识。
 
-Master就像一个数据管道，中间文件存储区域的位置信息通过这个管道从Map传递到Reduce。因此，对于每个已经完成的Map任务，master存储了Map任务产生的R个中间文件存储区域的大小和位置。当Map任务完成时，Master接收到位置和大小的更新信息，这些信息被逐步递增的推送给那些正在工作的Reduce任务。
+Master就像一个数据管道，中间文件存储区域的位置信息通过这个管道从Map传递到Reduce。因此，**对于每个已经完成的Map任务，master存储了Map任务产生的R个中间文件存储区域的大小和位置。当Map任务完成时，Master接收到位置和大小的更新信息，这些信息被逐步递增的推送给那些正在工作的Reduce任务。**
 
 ### 容错
 
 因为MapReduce库的设计初衷是使用由成百上千的机器组成的集群来处理超大规模的数据，所以，这个库必须要能很好的处理机器故障。
 #### worker故障
 
-master周期性的ping每个worker。如果在一个约定的时间范围内没有收到worker返回的信息，master将把这个worker标记为失效。所有由这个失效的worker完成的Map任务被重设为初始的空闲状态，之后这些任务就可以被安排给其他的worker。同样的，worker失效时正在运行的Map或Reduce任务也将被重新置为空闲状态，等待重新调度。
+**master周期性的ping每个worker**。如果在一个约定的时间范围内没有收到worker返回的信息，master将把这个worker标记为失效。所有由这个失效的worker完成的Map任务被重设为初始的空闲状态，之后这些任务就可以被安排给其他的worker。同样的，worker失效时正在运行的Map或Reduce任务也将被重新置为空闲状态，等待重新调度。
 
 当worker故障时，由于已经完成的Map任务的输出存储在这台机器上，Map任务的输出已不可访问了，因此必须重新执行。而已经完成的Reduce任务的输出存储在全局文件系统上，因此不需要再次执行。
 
@@ -78,7 +78,7 @@ master周期性的ping每个worker。如果在一个约定的时间范围内没�
 
 #### master失败
 
-一个简单的解决办法是让master周期性的将上面描述的数据结构的写入磁盘，即检查点（checkpoint）。如果这个master任务失效了，可以从最后一个检查点（checkpoint）开始启动另一个master进程。然而，由于只有一个master进程，master失效后再恢复是比较麻烦的，因此我们现在的实现是如果master失效，就中止MapReduce运算。客户可以检查到这个状态，并且可以根据需要重新执行MapReduce操作。
+**一个简单的解决办法是让master周期性的将上面描述的数据结构的写入磁盘，即检查点（checkpoint）。如果这个master任务失效了，可以从最后一个检查点（checkpoint）开始启动另一个master进程。** 然而，由于只有一个master进程，master失效后再恢复是比较麻烦的，因此我们现在的实现是如果master失效，就中止MapReduce运算。客户可以检查到这个状态，并且可以根据需要重新执行MapReduce操作。
 
 #### 在失效方面的处理机制
 

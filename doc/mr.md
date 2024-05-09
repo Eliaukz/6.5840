@@ -1,11 +1,4 @@
----
-title: mapreduce
-category: "6.5840"
-tags:
-  - 分布式
-  - 大数据
----
-# 6.5840
+# mapreduce
 该实验是分布式领域大名鼎鼎的lab之一，实验一要求我们实现mapreduce（Google三驾马车之一）。
 * lab地址[https://pdos.csail.mit.edu/6.824/labs/lab-mr.html](https://pdos.csail.mit.edu/6.824/labs/lab-mr.html)
 * 论文地址[https://static.googleusercontent.com/media/research.google.com/zh-CN//archive/mapreduce-osdi04.pdf](https://static.googleusercontent.com/media/research.google.com/zh-CN//archive/mapreduce-osdi04.pdf)

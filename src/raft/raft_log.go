@@ -204,31 +204,34 @@ func (rf *Raft) applyLogs() {
 	rf.mu.Lock()
 	var msgs []ApplyMsg
 	if rf.lastApplied < rf.lastIncludedIndex {
+		rf.commitIndex, rf.lastApplied = rf.lastIncludedIndex, rf.lastIncludedIndex
 		rf.mu.Unlock()
-		rf.condInstallSnapshot(rf.lastIncludedIndex, rf.lastIncludedTerm)
 		return
 	} else if rf.commitIndex <= rf.lastApplied {
-		msgs = make([]ApplyMsg, 0)
 		rf.commitIndex = rf.lastApplied
+		rf.mu.Unlock()
+		return
 	} else {
 		for i := rf.lastApplied + 1; i <= rf.commitIndex; i++ {
+			//rf.applyCh <- msg  直接写入管道会导致死锁？？？？  好奇怪
 			msgs = append(msgs, ApplyMsg{
 				CommandValid: true,
 				Command:      rf.logs[i-rf.lastIncludedIndex].Command,
 				CommandIndex: rf.logs[i-rf.lastIncludedIndex].Index,
 			})
 		}
-	}
-
-	rf.mu.Unlock()
-
-	for _, msg := range msgs {
-		rf.applyCh <- msg
-		//Debug(dLog, "{server %v term %v index %v } apple the index %v log command %v commitIndex %v lastApplied %v\n",
-		//	rf.me, rf.currentTerm, rf.getLastLogIndex(), msg.CommandIndex, msg.Command, rf.commitIndex, rf.lastApplied)
-
-		rf.mu.Lock()
-		rf.lastApplied = msg.CommandIndex
 		rf.mu.Unlock()
 	}
+
+	go func() {
+		for _, msg := range msgs {
+			rf.applyCh <- msg
+			//Debug(dLog, "{server %v term %v index %v } apple the index %v log command %v commitIndex %v lastApplied %v\n",
+			//	rf.me, rf.currentTerm, rf.getLastLogIndex(), msg.CommandIndex, msg.Command, rf.commitIndex, rf.lastApplied)
+
+			rf.mu.Lock()
+			rf.lastApplied = msg.CommandIndex
+			rf.mu.Unlock()
+		}
+	}()
 }

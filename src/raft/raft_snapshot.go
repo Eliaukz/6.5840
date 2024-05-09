@@ -172,22 +172,3 @@ func (rf *Raft) handleInstallSnapshot(server int) {
 		rf.matchIndex[server] = args.LastIncludedIndex
 	}
 }
-
-func (rf *Raft) condInstallSnapshot(lastIncludedIndex int, lastIncludedTerm int) {
-	// 截断自己的log，更新lastIncludedIndex，lastIncludedTerm
-	rf.mu.Lock()
-	defer rf.mu.Unlock()
-	defer rf.persist()
-
-	lastIndex := rf.getLastLogIndex()
-	if lastIncludedIndex > lastIndex {
-
-		rf.logs = []Entry{{Index: lastIncludedIndex, Term: lastIncludedTerm}}
-		rf.lastApplied, rf.commitIndex = lastIncludedIndex, lastIncludedIndex
-
-	}
-
-	//Debug(dSnap, "{server %v term %v index %v } update new snapshot lastIncludeIndex %v lastIndexTerm %v commitIndex %v lastApplied %v\n",
-	//	rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.lastIncludedIndex, rf.lastIncludedTerm, rf.commitIndex, rf.lastApplied)
-
-}
