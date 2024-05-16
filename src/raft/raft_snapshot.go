@@ -74,7 +74,6 @@ func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapsho
 		return
 	} else if args.Term > rf.currentTerm {
 		rf.convertTo(Follower)
-		rf.votedFor = -1
 		rf.currentTerm = args.Term
 	}
 
@@ -161,7 +160,6 @@ func (rf *Raft) handleInstallSnapshot(server int) {
 
 		rf.currentTerm = reply.Term
 		rf.convertTo(Follower)
-		rf.votedFor = -1
 		rf.lastUpdate = time.Now()
 		return
 	}

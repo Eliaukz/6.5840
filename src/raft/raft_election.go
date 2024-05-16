@@ -92,7 +92,6 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 
 	if args.Term > rf.currentTerm {
 		rf.currentTerm = args.Term
-		rf.votedFor = -1
 		rf.convertTo(Follower)
 	}
 
@@ -113,8 +112,6 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 
 func (rf *Raft) startElection() {
 	rf.mu.Lock()
-	rf.currentTerm++
-	rf.votedFor = rf.me
 	rf.convertTo(Candidate)
 	rf.mu.Unlock()
 	defer rf.persist()
@@ -144,7 +141,6 @@ func (rf *Raft) startElection() {
 				} else if reply.Term > rf.currentTerm {
 					//转变为对应任期的follower
 					rf.currentTerm = reply.Term
-					rf.votedFor = -1
 					rf.convertTo(Follower)
 				}
 			}

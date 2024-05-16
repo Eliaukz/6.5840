@@ -227,19 +227,24 @@ func (rf *Raft) getLastLogIndex() int {
 }
 
 func (rf *Raft) convertTo(role Role) {
-	if role == Follower && rf.role == Leader {
-		close(rf.heartChan)
-	} else if role == Leader {
-
+	switch role {
+	case Leader:
 		for i := range rf.nextIndex {
 			rf.nextIndex[i] = rf.getLastLogIndex() + 1
 		}
 		for i := range rf.matchIndex {
 			rf.matchIndex[i] = -1
 		}
-
 		rf.heartChan = make(chan struct{})
 		go rf.heartBeat()
+	case Candidate:
+		rf.currentTerm++
+		rf.votedFor = rf.me
+	case Follower:
+		rf.votedFor = -1
+		if rf.role == Leader {
+			close(rf.heartChan)
+		}
 	}
 
 	//Debug(dInfo, "{server %v term %v index %v } convert from %v to %v\n", rf.me, rf.currentTerm, rf.getLastLogIndex(), rf.role, role)

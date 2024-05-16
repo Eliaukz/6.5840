@@ -48,7 +48,6 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 		return
 	} else if args.Term > rf.currentTerm {
 		rf.currentTerm = args.Term
-		rf.votedFor = -1
 		rf.convertTo(Follower)
 	}
 
@@ -63,12 +62,12 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 
 	if args.PrevLogIndex-rf.lastIncludedIndex >= 0 && rf.logs[args.PrevLogIndex-rf.lastIncludedIndex].Term != args.PrevLogTerm {
 		reply.Term, reply.Success = rf.currentTerm, false
-		index := args.PrevLogIndex
-		reply.ConflictTerm = rf.logs[index-rf.lastIncludedIndex].Term
-		for index-rf.lastIncludedIndex > 0 && rf.logs[index-rf.lastIncludedIndex].Term >= reply.ConflictTerm {
+		index := args.PrevLogIndex - rf.lastIncludedIndex
+		reply.ConflictTerm = rf.logs[index].Term
+		for index > 0 && rf.logs[index].Term >= reply.ConflictTerm {
 			index--
 		}
-		reply.ConflictIndex = index + 1
+		reply.ConflictIndex = index + rf.lastIncludedIndex + 1
 		return
 	}
 
@@ -156,7 +155,6 @@ func (rf *Raft) handleAppendEntries(server int, args *AppendEntriesArgs, reply *
 
 	if reply.Term > rf.currentTerm {
 		rf.currentTerm = reply.Term
-		rf.votedFor = -1
 		rf.convertTo(Follower)
 		return
 	}
