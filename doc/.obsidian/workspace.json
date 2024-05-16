@@ -11,8 +11,12 @@
             "id": "06d8d089bc9ebb4d",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {}
+              "type": "markdown",
+              "state": {
+                "file": "raft-paper.md",
+                "mode": "source",
+                "source": false
+              }
             }
           }
         ]
@@ -81,6 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "raft-paper.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -97,6 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
+                "file": "raft-paper.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -118,7 +124,9 @@
             "type": "leaf",
             "state": {
               "type": "outline",
-              "state": {}
+              "state": {
+                "file": "raft-paper.md"
+              }
             }
           }
         ]
@@ -142,8 +150,8 @@
   "lastOpenFiles": [
     "raft.md",
     "raft-paper.md",
-    "mr.md",
     "mr-paper.md",
+    "mr.md",
     "imgs/img.png",
     "imgs/f9.png",
     "imgs/f8.png",
