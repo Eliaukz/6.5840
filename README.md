@@ -29,6 +29,8 @@ hint：
 ohhh：
 ~~没有服务器跑压力测试，怎么过了一周重新跑的还会出现bug~~
 
+lab4 的速度测试无法通过，猜测是因为raft层的设计有问题，因此lab4的速度测试才会无法通过
+
 [mapreduce](./doc/mr.md)    
 [mapreduce-paper](./doc/mr-paper.md)    
 [raft](./doc/raft.md)   
