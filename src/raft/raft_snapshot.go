@@ -96,9 +96,7 @@ func (rf *Raft) InstallSnapshot(args *InstallSnapshotArgs, reply *InstallSnapsho
 		rf.logs = tmpLogs
 		rf.lastIncludedIndex = args.LastIncludedIndex
 		rf.lastIncludedTerm = args.LastIncludedTerm
-		rf.logs[0].Term = rf.lastIncludedTerm
-		rf.logs[0].Command = nil
-		rf.logs[0].Index = rf.lastIncludedIndex
+		rf.logs[0] = Entry{Index: args.LastIncludedIndex, Term: args.LastIncludedTerm, Command: nil}
 	}
 
 	rf.snapshot = args.Data
