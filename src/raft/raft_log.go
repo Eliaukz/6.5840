@@ -117,11 +117,7 @@ func (rf *Raft) getAppendEntries(server int) (AppendEntriesArgs, bool) {
 		return args, true
 	}
 
-	if index := args.PrevLogIndex - rf.lastIncludedIndex; index < 0 {
-		args.PrevLogTerm = 0
-	} else {
-		args.PrevLogTerm = rf.logs[index].Term
-	}
+	args.PrevLogTerm = rf.logs[args.PrevLogIndex-rf.lastIncludedIndex].Term
 
 	entries := rf.logs[rf.nextIndex[server]-rf.lastIncludedIndex:]
 	args.Entries = make([]Entry, len(entries))
