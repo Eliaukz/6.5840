@@ -43,7 +43,7 @@ func Worker(mapf func(string, string) []KeyValue,
 		args := ExampleArgs{}
 		reply := Task{}
 		call("Coordinator.AskForTask", &args, &reply)
-		log.Println("worker get task ", reply.TaskId, " task info ", reply.Costatus)
+		//log.Println("worker get task ", reply.TaskId, " task info ", reply.Costatus)
 		switch reply.Costatus {
 		case Map:
 			mapper(&reply, mapf)
@@ -77,7 +77,7 @@ func mapper(reply *Task, mapf func(string, string) []KeyValue) {
 	}
 
 	r := ExampleReply{}
-	log.Println("worker finish task ", reply.TaskId)
+	//log.Println("worker finish task ", reply.TaskId)
 	call("Coordinator.CommitTask", reply, &r)
 }
 
@@ -128,7 +128,7 @@ func reducer(task *Task, reducef func(string, []string) string) {
 	task.Output = newname
 
 	r := ExampleReply{}
-	log.Println("worker commit task ", task.TaskId)
+	//log.Println("worker commit task ", task.TaskId)
 	call("Coordinator.CommitTask", task, &r)
 }
 

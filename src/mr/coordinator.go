@@ -147,7 +147,7 @@ func (c *Coordinator) GenerateResult(args *Task) {
 			c.Temp[id] = append(c.Temp[id], file)
 		}
 		if c.isAllDone() {
-			log.Println("coordinator convert to reduce")
+			//log.Println("coordinator convert to reduce")
 			c.TaskInfo = make(map[int]*TaskInfo)
 			for id, file := range c.Temp {
 				task := Task{
