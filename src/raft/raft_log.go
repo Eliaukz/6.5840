@@ -22,6 +22,7 @@ type AppendEntriesReply struct {
 
 	ConflictIndex int
 	ConflictTerm  int
+	Len           int
 }
 
 func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply) {
@@ -61,11 +62,12 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 	}
 
 	if args.PrevLogIndex-rf.lastIncludedIndex >= 0 && rf.logs[args.PrevLogIndex-rf.lastIncludedIndex].Term != args.PrevLogTerm {
-		reply.Term, reply.Success = rf.currentTerm, false
+		reply.Term, reply.Success, reply.Len = rf.currentTerm, false, 0
 		index := args.PrevLogIndex - rf.lastIncludedIndex
 		reply.ConflictTerm = rf.logs[index].Term
 		for index > 0 && rf.logs[index].Term >= reply.ConflictTerm {
 			index--
+			reply.Len++
 		}
 		reply.ConflictIndex = index + rf.lastIncludedIndex + 1
 		return
@@ -73,17 +75,7 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 
 	rf.logs = rf.logs[:args.PrevLogIndex+1-rf.lastIncludedIndex]
 
-	index := rf.getLastLogIndex()
-
-	for i, log := range args.Entries {
-		entry := Entry{
-			Index:   index + i + 1,
-			Term:    log.Term,
-			Command: log.Command,
-		}
-		rf.logs = append(rf.logs, entry)
-	}
-
+	rf.logs = append(rf.logs, args.Entries...)
 	if args.LeaderCommit > rf.commitIndex {
 		if args.LeaderCommit < rf.getLastLogIndex() {
 			rf.commitIndex = args.LeaderCommit
@@ -119,9 +111,7 @@ func (rf *Raft) getAppendEntries(server int) (AppendEntriesArgs, bool) {
 
 	args.PrevLogTerm = rf.logs[args.PrevLogIndex-rf.lastIncludedIndex].Term
 
-	entries := rf.logs[rf.nextIndex[server]-rf.lastIncludedIndex:]
-	args.Entries = make([]Entry, len(entries))
-	copy(args.Entries, entries)
+	args.Entries = rf.logs[rf.nextIndex[server]-rf.lastIncludedIndex:]
 
 	return args, false
 }
@@ -157,10 +147,8 @@ func (rf *Raft) handleAppendEntries(server int, args *AppendEntriesArgs, reply *
 
 	if !reply.Success {
 		if reply.ConflictTerm != 0 {
-			index := rf.nextIndex[server] - 1 - rf.lastIncludedIndex
-			for index >= 0 && rf.logs[index].Term > reply.ConflictTerm {
-				index--
-			}
+			index := args.PrevLogIndex - rf.lastIncludedIndex - reply.Len
+
 			if index > 0 && rf.logs[index].Term == reply.ConflictTerm {
 				rf.nextIndex[server] = index + 1 + rf.lastIncludedIndex
 				return
