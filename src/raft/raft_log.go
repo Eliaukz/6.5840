@@ -150,7 +150,7 @@ func (rf *Raft) handleAppendEntries(server int, args *AppendEntriesArgs, reply *
 			index := args.PrevLogIndex - rf.lastIncludedIndex - reply.Len
 
 			if index > 0 && rf.logs[index].Term == reply.ConflictTerm {
-				rf.nextIndex[server] = index + 1 + rf.lastIncludedIndex
+				rf.nextIndex[server] = max(index+1+rf.lastIncludedIndex, rf.matchIndex[server]+1)
 				return
 			}
 		}
