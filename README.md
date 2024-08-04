@@ -1,5 +1,5 @@
 # 6.5840
-spring 2024 (不保证稳定通过测试)
+spring 2024 
 
 ## p1 MapReduce
 ## p2 Key/Value Server
