@@ -154,7 +154,7 @@ func (rf *Raft) handleAppendEntries(server int, args *AppendEntriesArgs, reply *
 				return
 			}
 		}
-		rf.nextIndex[server] = reply.ConflictIndex
+		rf.nextIndex[server] = max(reply.ConflictIndex, rf.matchIndex[server]+1)
 		return
 	}
 
